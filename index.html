@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f0e0c">
+<title>our calendar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --you:#e8856a; --her:#6aabe8; --both:#a06ae8;
+  --you-bg:rgba(232,133,106,0.13); --her-bg:rgba(106,171,232,0.13); --both-bg:rgba(160,106,232,0.13);
+  --bg:#0f0e0c; --surface:#1a1916; --surface2:#232118;
+  --border:rgba(255,255,255,0.08); --text:#f0ece4; --muted:rgba(240,236,228,0.4);
+  --safe-top:env(safe-area-inset-top,0px); --safe-bot:env(safe-area-inset-bottom,0px);
+  --sidebar-w:220px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+
+/* ── LOGIN ─────────────────────────── */
+#splash{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999}
+.wordmark{font-family:'Cormorant Garamond',serif;font-size:clamp(2.4rem,7vw,3.6rem);font-weight:400;letter-spacing:-.03em;color:var(--text)}
+.tagline{font-size:.7rem;font-weight:300;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin-top:.4rem;margin-bottom:2.2rem}
+.login-box{width:min(340px,90vw);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:1.75rem}
+.login-box h2{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.2rem;font-weight:400;color:var(--text);margin-bottom:1.1rem}
+.field{width:100%;padding:.72rem 1rem;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Outfit',sans-serif;font-size:.9rem;outline:none;margin-bottom:.65rem;transition:border-color .2s}
+.field::placeholder{color:var(--muted)} .field:focus{border-color:rgba(255,255,255,.25)}
+.btn-main{width:100%;padding:.85rem;background:var(--text);color:var(--bg);border:none;border-radius:10px;font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;transition:opacity .2s}
+.btn-main:hover{opacity:.85}
+.login-hint{text-align:center;color:var(--muted);font-size:.7rem;margin-top:.8rem}
+.login-hint strong{color:rgba(255,255,255,.3)}
+.sync-pill{display:flex;align-items:center;justify-content:center;gap:.4rem;font-size:.7rem;color:var(--muted);margin-top:.75rem}
+.sync-pill .dot{width:6px;height:6px;border-radius:50%;background:var(--muted);transition:background .3s}
+.sync-pill .dot.live{background:#6aabe8;box-shadow:0 0 6px rgba(106,171,232,.5)}
+
+/* ── APP LAYOUT ─────────────────────── */
+#app{display:none;height:100dvh;flex-direction:row}
+
+/* ── SIDEBAR ─────────────────────────── */
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
+.sidebar-logo{padding:1.1rem 1rem .8rem;border-bottom:1px solid var(--border);flex-shrink:0}
+.sidebar-logo .logo-text{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;letter-spacing:-.02em}
+.sidebar-logo .logo-sub{font-size:.65rem;color:var(--muted);margin-top:.1rem;display:flex;align-items:center;gap:.35rem}
+.sidebar-logo .logo-sub .sdot{width:5px;height:5px;border-radius:50%;background:var(--muted);transition:background .3s}
+.sidebar-logo .logo-sub .sdot.live{background:#6aabe8}
+.sidebar-nav{display:flex;flex-direction:column;gap:2px;padding:.6rem .5rem;flex-shrink:0}
+.snav-item{display:flex;align-items:center;gap:.6rem;padding:.6rem .75rem;border-radius:10px;cursor:pointer;font-size:.85rem;font-weight:500;color:var(--muted);border:none;background:none;font-family:'Outfit',sans-serif;width:100%;text-align:left;transition:all .15s}
+.snav-item:hover{background:var(--surface2);color:var(--text)}
+.snav-item.active{background:var(--surface2);color:var(--text)}
+.snav-item .sico{font-size:1rem;width:20px;text-align:center}
+.sidebar-divider{height:1px;background:var(--border);margin:.3rem .5rem}
+.sidebar-footer{margin-top:auto;padding:.75rem .5rem;border-top:1px solid var(--border);display:flex;gap:.4rem}
+.sf-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:.3rem;padding:.55rem .4rem;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-size:.7rem;font-family:'Outfit',sans-serif;transition:all .15s}
+.sf-btn:hover{background:var(--surface2);color:var(--text)}
+
+/* mobile sidebar toggle */
+.mob-hdr{display:none;background:var(--surface);border-bottom:1px solid var(--border);padding:.75rem 1rem;align-items:center;justify-content:space-between;flex-shrink:0}
+.mob-hdr-title{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600}
+.mob-hdr-right{display:flex;align-items:center;gap:.5rem}
+.ham-btn{background:none;border:none;color:var(--text);font-size:1.3rem;cursor:pointer;padding:.2rem}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300}
+.sidebar-overlay.open{display:block}
+@media(max-width:640px){
+  #app{flex-direction:column}
+  .sidebar{position:fixed;left:-100%;top:0;bottom:0;z-index:400;transition:left .25s;width:min(280px,85vw)}
+  .sidebar.open{left:0}
+  .mob-hdr{display:flex}
+  .main-area{height:calc(100dvh - 50px)}
+}
+
+/* ── MAIN AREA ─────────────────────── */
+.main-area{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.main-hdr{padding:.85rem 1.1rem .7rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--surface)}
+.main-hdr-left{display:flex;align-items:center;gap:.75rem}
+.view-title{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;font-style:italic}
+.month-nav{display:flex;align-items:center;gap:.3rem}
+.mnav{background:none;border:none;color:var(--muted);font-size:1rem;cursor:pointer;padding:.15rem .45rem;border-radius:6px;transition:background .15s}
+.mnav:hover{background:var(--surface2)}
+.month-lbl{font-size:.82rem;font-weight:500;min-width:110px;text-align:center}
+.add-btn{display:flex;align-items:center;gap:.4rem;padding:.5rem .9rem;background:var(--text);color:var(--bg);border:none;border-radius:10px;font-family:'Outfit',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:opacity .15s;white-space:nowrap}
+.add-btn:hover{opacity:.85}
+.add-btn .plus{font-size:1.1rem;line-height:1}
+.main-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+
+/* ── CALENDAR ────────────────────────── */
+#view-calendar{padding:0 .75rem .75rem}
+.legend{display:flex;gap:.9rem;padding:.6rem 0 .4rem;flex-wrap:wrap}
+.leg{display:flex;align-items:center;gap:.3rem;font-size:.7rem;color:var(--muted)}
+.leg-dot{width:6px;height:6px;border-radius:50%}
+.wdays{display:grid;grid-template-columns:repeat(7,1fr);padding:.4rem 0 .25rem}
+.wday{text-align:center;font-size:.63rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cell{min-height:76px;padding:3px;border-radius:8px;cursor:pointer;display:flex;flex-direction:column;transition:background .12s}
+.cell:hover{background:var(--surface2)} .cell.other .dnum{color:rgba(255,255,255,.15)}
+.dnum{font-size:.74rem;font-weight:500;width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0}
+.cell.today .dnum{background:var(--text);color:var(--bg);font-weight:700}
+.epills{display:flex;flex-direction:column;gap:1px;margin-top:1px;flex:1;overflow:hidden}
+.pill{font-size:.57rem;padding:1px 3px;border-radius:3px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill.you{background:var(--you-bg);color:var(--you)} .pill.her{background:var(--her-bg);color:var(--her)} .pill.both{background:var(--both-bg);color:var(--both)}
+.todo-dots{display:flex;gap:2px;margin-top:2px;flex-wrap:wrap}
+.tdot{width:4px;height:4px;border-radius:50%;background:var(--muted);flex-shrink:0} .tdot.done{opacity:.28}
+.more{font-size:.56rem;color:var(--muted)}
+
+/* ── LIST VIEWS (todo / tobuy) ─────── */
+#view-todo,#view-tobuy{padding:1rem 1.1rem}
+.list-hdr{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-style:italic;margin-bottom:.2rem}
+.list-sub{font-size:.75rem;color:var(--muted);margin-bottom:1rem}
+.list-section{margin-bottom:1.5rem}
+.list-sec-title{font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem;display:flex;align-items:center;justify-content:space-between}
+.list-items{display:flex;flex-direction:column;gap:.35rem}
+.list-item{display:flex;align-items:center;gap:.65rem;padding:.65rem .85rem;background:var(--surface);border:1px solid var(--border);border-radius:11px;transition:opacity .15s}
+.list-item.done-item{opacity:.45}
+.chk{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--border);background:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.75rem;transition:all .2s}
+.chk.checked{background:var(--text);border-color:var(--text);color:var(--bg)}
+.item-text{flex:1;font-size:.88rem;line-height:1.3}
+.item-text.crossed{text-decoration:line-through;color:var(--muted)}
+.item-meta{font-size:.7rem;color:var(--muted)}
+.item-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;padding:.15rem .3rem;border-radius:5px;transition:color .15s;flex-shrink:0}
+.item-del:hover{color:var(--you)}
+.item-add-row{display:flex;gap:.5rem;margin-top:.6rem}
+.item-inp{flex:1;padding:.65rem .9rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Outfit',sans-serif;font-size:.85rem;outline:none;transition:border-color .2s}
+.item-inp::placeholder{color:var(--muted)} .item-inp:focus{border-color:rgba(255,255,255,.22)}
+.item-add-btn{padding:.65rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Outfit',sans-serif;font-size:.85rem;cursor:pointer;font-weight:500;transition:background .15s;white-space:nowrap}
+.item-add-btn:hover{background:var(--surface2)}
+.empty-list{text-align:center;padding:2rem 1rem;color:var(--muted);font-size:.85rem}
+
+/* ── UPCOMING ────────────────────────── */
+#view-upcoming{padding:1rem 1.1rem}
+.up-hdr{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-style:italic;margin-bottom:1rem}
+.date-grp{font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1rem 0 .4rem}
+.ecard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.75rem .9rem;margin-bottom:.4rem;display:flex;gap:.6rem;align-items:flex-start;cursor:pointer;transition:background .12s}
+.ecard:hover{background:var(--surface2)}
+.ebar{width:3px;border-radius:3px;align-self:stretch;min-height:30px;flex-shrink:0}
+.econtent{flex:1} .etitle{font-size:.87rem;font-weight:500;margin-bottom:.15rem}
+.emeta{font-size:.73rem;color:var(--muted);display:flex;gap:.5rem;flex-wrap:wrap}
+.obadge{font-size:.65rem;padding:2px 7px;border-radius:20px;font-weight:600;flex-shrink:0;align-self:center}
+.obadge.you{background:var(--you-bg);color:var(--you)} .obadge.her{background:var(--her-bg);color:var(--her)} .obadge.both{background:var(--both-bg);color:var(--both)}
+
+/* ── MODALS ──────────────────────────── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;align-items:flex-end;justify-content:center;backdrop-filter:blur(3px)}
+.overlay.open{display:flex}
+.sheet{background:var(--surface);border-radius:20px 20px 0 0;padding:1.1rem 1.25rem calc(1.25rem + var(--safe-bot));width:100%;max-width:520px;max-height:92dvh;overflow-y:auto;animation:up .22s ease}
+@keyframes up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 1.1rem}
+.sheet-title{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-style:italic;margin-bottom:1rem}
+.flabel{display:block;font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.32rem}
+.fgroup{margin-bottom:.85rem}
+.finput{width:100%;padding:.7rem .9rem;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Outfit',sans-serif;font-size:.88rem;outline:none;transition:border-color .2s}
+.finput::placeholder{color:var(--muted)} .finput:focus{border-color:rgba(255,255,255,.22)}
+.opick{display:flex;gap:.4rem}
+.obtn{flex:1;padding:.58rem .2rem;border:1.5px solid var(--border);border-radius:10px;background:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.78rem;font-weight:500;color:var(--muted);transition:all .15s}
+.obtn.sel-you{border-color:var(--you);background:var(--you-bg);color:var(--you)}
+.obtn.sel-her{border-color:var(--her);background:var(--her-bg);color:var(--her)}
+.obtn.sel-both{border-color:var(--both);background:var(--both-bg);color:var(--both)}
+.rchips{display:flex;flex-wrap:wrap;gap:.35rem}
+.rchip{padding:.35rem .65rem;border:1px solid var(--border);border-radius:20px;font-size:.75rem;cursor:pointer;background:none;font-family:'Outfit',sans-serif;color:var(--muted);transition:all .15s}
+.rchip.sel{border-color:var(--text);background:var(--text);color:var(--bg)}
+.macts{display:flex;gap:.55rem;margin-top:1.2rem}
+.btn-sec{flex:1;padding:.78rem;border:1px solid var(--border);border-radius:10px;background:none;font-family:'Outfit',sans-serif;font-size:.87rem;font-weight:500;cursor:pointer;color:var(--text)}
+.btn-pri{flex:2;padding:.78rem;border:none;border-radius:10px;background:var(--text);color:var(--bg);font-family:'Outfit',sans-serif;font-size:.87rem;font-weight:600;cursor:pointer;transition:opacity .15s}
+.btn-pri:hover{opacity:.85}
+.btn-del{padding:.78rem .9rem;border:1px solid rgba(232,133,106,.3);border-radius:10px;background:none;color:var(--you);font-family:'Outfit',sans-serif;font-size:.87rem;cursor:pointer}
+
+/* Day detail */
+.dd-date-lbl{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;margin-bottom:.1rem}
+.dd-sub{font-size:.76rem;color:var(--muted);margin-bottom:1rem}
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:.45rem}
+.sec-lbl{font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.add-link{font-size:.74rem;color:var(--muted);background:none;border:none;cursor:pointer;font-family:'Outfit',sans-serif;padding:.18rem .45rem;border-radius:6px;transition:all .15s}
+.add-link:hover{color:var(--text);background:var(--surface2)}
+.dev-item{display:flex;align-items:flex-start;gap:.55rem;padding:.6rem .7rem;background:var(--surface2);border-radius:10px;margin-bottom:.35rem;cursor:pointer;transition:opacity .15s}
+.dev-item:hover{opacity:.8}
+.dev-bar{width:3px;border-radius:3px;align-self:stretch;min-height:26px;flex-shrink:0}
+.dev-content{flex:1} .dev-title{font-size:.84rem;font-weight:500} .dev-meta{font-size:.71rem;color:var(--muted);margin-top:.1rem}
+.dtodo-item{display:flex;align-items:center;gap:.55rem;padding:.58rem .7rem;background:var(--surface2);border-radius:10px;margin-bottom:.3rem}
+.dtodo-chk{width:17px;height:17px;border-radius:5px;border:1.5px solid var(--border);background:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.68rem;transition:all .18s}
+.dtodo-chk.done{background:var(--text);border-color:var(--text)}
+.dtodo-text{flex:1;font-size:.84rem} .dtodo-text.done{opacity:.38;text-decoration:line-through}
+.dtodo-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.82rem;padding:.1rem .22rem;border-radius:4px;transition:color .15s}
+.dtodo-del:hover{color:var(--you)}
+.dtodo-add{display:flex;gap:.45rem;margin-top:.45rem}
+.dtodo-inp{flex:1;padding:.6rem .8rem;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Outfit',sans-serif;font-size:.84rem;outline:none}
+.dtodo-inp::placeholder{color:var(--muted)} .dtodo-inp:focus{border-color:rgba(255,255,255,.22)}
+.dtodo-add-btn{padding:.6rem .85rem;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Outfit',sans-serif;font-size:.84rem;cursor:pointer;font-weight:500}
+.divider{height:1px;background:var(--border);margin:.9rem 0}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(10px);background:var(--text);color:var(--bg);padding:.58rem 1.1rem;border-radius:20px;font-size:.8rem;font-weight:500;z-index:700;opacity:0;transition:opacity .2s,transform .2s;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.notif-banner{position:fixed;top:1rem;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:.7rem 1.1rem;font-size:.8rem;color:var(--text);z-index:800;box-shadow:0 4px 20px rgba(0,0,0,.4);max-width:90vw;display:none;animation:fadeIn .3s}
+@keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(-8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN ──────────────────────── -->
+<div id="splash">
+  <div class="wordmark">our calendar</div>
+  <div class="tagline">shared between two</div>
+  <div class="login-box">
+    <h2>Welcome back</h2>
+    <input class="field" id="li-name" type="text" placeholder="Your name (e.g. Erik)" autocomplete="off">
+    <input class="field" id="li-pass" type="password" placeholder="Shared password">
+    <button class="btn-main" onclick="doLogin()">Sign in together</button>
+    <div class="login-hint">Shared password: <strong>together</strong></div>
+    <div class="sync-pill"><div class="dot" id="ldot"></div><span id="lstatus">Connecting...</span></div>
+  </div>
+</div>
+
+<!-- ── APP ─────────────────────────── -->
+<div id="app">
+
+  <!-- Sidebar overlay (mobile) -->
+  <div class="sidebar-overlay" id="sb-overlay" onclick="closeSidebar()"></div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-text">our calendar</div>
+      <div class="logo-sub"><div class="sdot" id="sdot"></div><span id="sstatus">connecting...</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="snav-item active" id="snav-calendar" onclick="swView('calendar',this)">
+        <span class="sico">&#128197;</span>Calendar
+      </button>
+      <button class="snav-item" id="snav-upcoming" onclick="swView('upcoming',this)">
+        <span class="sico">&#128336;</span>Upcoming
+      </button>
+      <div class="sidebar-divider"></div>
+      <button class="snav-item" id="snav-todo" onclick="swView('todo',this)">
+        <span class="sico">&#9989;</span>To-do list
+      </button>
+      <button class="snav-item" id="snav-tobuy" onclick="swView('tobuy',this)">
+        <span class="sico">&#128722;</span>To-buy list
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="sf-btn" onclick="reqNotif()">&#128276; Alerts</button>
+      <button class="sf-btn" onclick="doLogout()">&#128075; Sign out</button>
+    </div>
+  </div>
+
+  <!-- MAIN AREA -->
+  <div class="main-area">
+
+    <!-- Mobile header -->
+    <div class="mob-hdr">
+      <button class="ham-btn" onclick="openSidebar()">&#9776;</button>
+      <div class="mob-hdr-title" id="mob-title">Calendar</div>
+      <div class="mob-hdr-right">
+        <button class="add-btn" onclick="handleAdd()"><span class="plus">+</span> Add</button>
+      </div>
+    </div>
+
+    <!-- Desktop header -->
+    <div class="main-hdr">
+      <div class="main-hdr-left">
+        <div class="view-title" id="view-title">Shared Calendar</div>
+        <div class="month-nav" id="month-nav">
+          <button class="mnav" onclick="chMon(-1)">&#8249;</button>
+          <span class="month-lbl" id="mlbl"></span>
+          <button class="mnav" onclick="chMon(1)">&#8250;</button>
+        </div>
+      </div>
+      <button class="add-btn" onclick="handleAdd()"><span class="plus">+</span> <span id="add-label">Add Event</span></button>
+    </div>
+
+    <div class="main-scroll">
+
+      <!-- CALENDAR VIEW -->
+      <div id="view-calendar">
+        <div class="legend">
+          <div class="leg"><div class="leg-dot" style="background:var(--you)"></div><span id="lyou">You</span></div>
+          <div class="leg"><div class="leg-dot" style="background:var(--her)"></div><span>Partner</span></div>
+          <div class="leg"><div class="leg-dot" style="background:var(--both)"></div><span>Together</span></div>
+          <div class="leg"><div class="leg-dot" style="background:var(--muted)"></div><span>To-do</span></div>
+        </div>
+        <div class="wdays">
+          <div class="wday">Su</div><div class="wday">Mo</div><div class="wday">Tu</div>
+          <div class="wday">We</div><div class="wday">Th</div><div class="wday">Fr</div><div class="wday">Sa</div>
+        </div>
+        <div class="grid" id="grid"></div>
+      </div>
+
+      <!-- UPCOMING VIEW -->
+      <div id="view-upcoming" style="display:none">
+        <div style="padding:1rem 1.1rem">
+          <div class="up-hdr">Upcoming plans</div>
+          <div id="ulist"></div>
+        </div>
+      </div>
+
+      <!-- TO-DO VIEW -->
+      <div id="view-todo" style="display:none">
+        <div class="list-hdr">To-do list</div>
+        <div class="list-sub">Shared tasks for both of you</div>
+        <div class="item-add-row">
+          <input class="item-inp" id="todo-inp" type="text" placeholder="Add a to-do...">
+          <button class="item-add-btn" onclick="addGlobalItem('todo')">Add</button>
+        </div>
+        <div style="margin-top:1rem" id="todo-list"></div>
+      </div>
+
+      <!-- TO-BUY VIEW -->
+      <div id="view-tobuy" style="display:none">
+        <div class="list-hdr">To-buy list</div>
+        <div class="list-sub">Shopping list for both of you</div>
+        <div class="item-add-row">
+          <input class="item-inp" id="tobuy-inp" type="text" placeholder="Add an item to buy...">
+          <button class="item-add-btn" onclick="addGlobalItem('tobuy')">Add</button>
+        </div>
+        <div style="margin-top:1rem" id="tobuy-list"></div>
+      </div>
+
+    </div><!-- /main-scroll -->
+  </div><!-- /main-area -->
+</div><!-- /app -->
+
+<!-- EVENT ADD/EDIT MODAL -->
+<div class="overlay" id="emod">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="sheet-title" id="emod-title">Add a plan</div>
+    <div class="fgroup"><label class="flabel">What's the plan?</label><input class="finput" id="e-title" type="text" placeholder="e.g. Dinner at Nobu"></div>
+    <div class="fgroup"><label class="flabel">Date</label><input class="finput" id="e-date" type="date"></div>
+    <div class="fgroup"><label class="flabel">Time (optional)</label><input class="finput" id="e-time" type="time"></div>
+    <div class="fgroup"><label class="flabel">Notes</label><input class="finput" id="e-notes" type="text" placeholder="Any details..."></div>
+    <div class="fgroup">
+      <label class="flabel">Whose plan?</label>
+      <div class="opick">
+        <button class="obtn" id="ob-you" onclick="selOwner('you')">Mine</button>
+        <button class="obtn" id="ob-her" onclick="selOwner('her')">Partner's</button>
+        <button class="obtn" id="ob-both" onclick="selOwner('both')">Together &#9825;</button>
+      </div>
+    </div>
+    <div class="fgroup">
+      <label class="flabel">Reminder</label>
+      <div class="rchips">
+        <button class="rchip sel" data-r="none" onclick="selRem(this,'none')">None</button>
+        <button class="rchip" data-r="1h" onclick="selRem(this,'1h')">1 hr before</button>
+        <button class="rchip" data-r="1d" onclick="selRem(this,'1d')">1 day before</button>
+        <button class="rchip" data-r="3d" onclick="selRem(this,'3d')">3 days before</button>
+      </div>
+    </div>
+    <div class="macts">
+      <button class="btn-sec" onclick="closeEmod()">Cancel</button>
+      <button class="btn-del" id="edel-btn" onclick="delEvent()" style="display:none">Delete</button>
+      <button class="btn-pri" onclick="saveEvent()">Save plan</button>
+    </div>
+  </div>
+</div>
+
+<!-- DAY DETAIL MODAL -->
+<div class="overlay" id="dmod">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="dd-date-lbl" id="dd-date"></div>
+    <div class="dd-sub">Tap an event to edit</div>
+    <div class="sec-hdr"><span class="sec-lbl">Events</span><button class="add-link" onclick="openAddFromDay()">+ Add event</button></div>
+    <div id="dd-events"></div>
+    <div class="divider"></div>
+    <div class="sec-hdr"><span class="sec-lbl">Day to-dos</span></div>
+    <div id="dd-todos"></div>
+    <div class="dtodo-add">
+      <input class="dtodo-inp" id="dtodo-inp" type="text" placeholder="Add a to-do for this day...">
+      <button class="dtodo-add-btn" onclick="addDayTodo()">Add</button>
+    </div>
+    <div class="macts" style="margin-top:1.3rem"><button class="btn-sec" onclick="closeDmod()">Close</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="notif-banner" id="notif-banner"></div>
+
+<script>
+// ══════════════════════════════════════
+// FIREBASE CONFIG
+// ══════════════════════════════════════
+var FB = {
+  apiKey:            "AIzaSyCI62eojbyvA0SX-DzrYCROpXgmmwC_ipc",
+  authDomain:        "couple-calendar-20e17.firebaseapp.com",
+  databaseURL:       "https://couple-calendar-20e17-default-rtdb.firebaseio.com",
+  projectId:         "couple-calendar-20e17",
+  storageBucket:     "couple-calendar-20e17.firebasestorage.app",
+  messagingSenderId: "415817059573",
+  appId:             "1:415817059573:web:ede4683af6fa4a70d8c9bc"
+};
+// ══════════════════════════════════════
+
+var PASS = 'together';
+var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+var curUser='', curMon=new Date().getMonth(), curYear=new Date().getFullYear();
+var editId=null, _selOwner='you', _selRem='none', activeDay=null, curView='calendar';
+var allEvents={}, allTodos={}, allGlobalTodo={}, allGlobalTobuy={};
+var fbReady=false, _db=null;
+var notifGranted=false;
+
+// ── FIREBASE ──────────────────────────
+function initFirebase() {
+  loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js', function() {
+    loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js', function() {
+      try {
+        firebase.initializeApp(FB);
+        _db = firebase.database();
+        fbReady = true;
+        setSyncUI(true);
+
+        listen('events', function(v){ allEvents=v; renderCal(); if(curView==='upcoming') renderUpcoming(); });
+        listen('todos',  function(v){ allTodos=v;  renderCal(); if(activeDay) renderDayTodos(activeDay); });
+        listen('gtodo',  function(v){ allGlobalTodo=v;  if(curView==='todo')  renderGlobalList('todo');  });
+        listen('gtobuy', function(v){ allGlobalTobuy=v; if(curView==='tobuy') renderGlobalList('tobuy'); });
+
+        _db.ref('.info/connected').on('value', function(s){
+          setSyncUI(s.val()===true);
+        });
+
+        // Listen for new items added by partner — show in-app notification
+        _db.ref('notifications').on('child_added', function(snap) {
+          var n = snap.val();
+          if (n && n.by !== curUser && n.ts > (window._lastNotifTs||0)) {
+            window._lastNotifTs = n.ts;
+            showBanner(n.msg);
+            if (notifGranted) new Notification('our calendar &#9825;', {body: n.msg});
+            _db.ref('notifications/'+snap.key).remove();
+          }
+        });
+
+      } catch(e){ console.warn('FB error',e); setSyncUI(false); }
+    });
+  });
+}
+
+function loadScript(src, cb) {
+  var s=document.createElement('script'); s.src=src; s.onload=cb; s.onerror=function(){setSyncUI(false);}; document.head.appendChild(s);
+}
+
+function listen(path, cb) {
+  _db.ref(path).on('value', function(snap){ cb(snap.val()||{}); });
+}
+
+function fbSet(path, val) {
+  if (fbReady) _db.ref(path).set(val);
+  else { console.warn('Firebase not ready'); }
+}
+function fbRemove(path) { if(fbReady) _db.ref(path).remove(); }
+function fbUpdate(path, val) { if(fbReady) _db.ref(path).update(val); }
+
+function pushNotif(msg) {
+  if (!fbReady || !curUser) return;
+  var id = Date.now().toString();
+  fbSet('notifications/'+id, {msg:msg, by:curUser, ts:Date.now()});
+}
+
+function setSyncUI(on) {
+  ['ldot','sdot'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.classList.toggle('live',on);
+  });
+  var st = on ? 'Live sync active' : 'Offline';
+  var lsts=document.getElementById('lstatus'); if(lsts) lsts.textContent=st;
+  var ssts=document.getElementById('sstatus'); if(ssts) ssts.textContent=st;
+}
+
+// Local fallback helpers
+function localGet(k){try{return JSON.parse(localStorage.getItem(k)||'{}')}catch{return{}}}
+function localSet(k,v){localStorage.setItem(k,JSON.stringify(v));}
+function getEvents(){return fbReady?allEvents:localGet('oc_ev');}
+function getTodos(){return fbReady?allTodos:localGet('oc_td');}
+function getGtodo(){return fbReady?allGlobalTodo:localGet('oc_gtd');}
+function getGtobuy(){return fbReady?allGlobalTobuy:localGet('oc_gtb');}
+
+function saveEvt(id,data) {
+  if(fbReady){fbSet('events/'+id,data);}
+  else{var e=localGet('oc_ev');e[id]=data;localSet('oc_ev',e);allEvents=e;renderCal();}
+}
+function delEvt(id) {
+  if(fbReady){fbRemove('events/'+id);}
+  else{var e=localGet('oc_ev');delete e[id];localSet('oc_ev',e);allEvents=e;renderCal();}
+}
+function saveDayTodo(ds,id,data) {
+  if(fbReady){fbSet('todos/'+ds+'/'+id,data);}
+  else{var t=localGet('oc_td');if(!t[ds])t[ds]={};t[ds][id]=data;localSet('oc_td',t);allTodos=t;renderCal();}
+}
+function delDayTodo(ds,id) {
+  if(fbReady){fbRemove('todos/'+ds+'/'+id);}
+  else{var t=localGet('oc_td');if(t[ds])delete t[ds][id];localSet('oc_td',t);allTodos=t;renderCal();}
+}
+function updateDayTodo(ds,id,patch) {
+  if(fbReady){fbUpdate('todos/'+ds+'/'+id,patch);}
+  else{var t=localGet('oc_td');if(t[ds]&&t[ds][id])Object.assign(t[ds][id],patch);localSet('oc_td',t);allTodos=t;}
+}
+function saveGItem(type,id,data) {
+  var key='oc_g'+type;
+  if(fbReady){fbSet('g'+type+'/'+id,data);}
+  else{var g=localGet(key);g[id]=data;localSet(key,g);if(type==='todo')allGlobalTodo=g;else allGlobalTobuy=g;renderGlobalList(type);}
+}
+function delGItem(type,id) {
+  var key='oc_g'+type;
+  if(fbReady){fbRemove('g'+type+'/'+id);}
+  else{var g=localGet(key);delete g[id];localSet(key,g);if(type==='todo')allGlobalTodo=g;else allGlobalTobuy=g;renderGlobalList(type);}
+}
+function updateGItem(type,id,patch) {
+  var key='oc_g'+type;
+  if(fbReady){fbUpdate('g'+type+'/'+id,patch);}
+  else{var g=localGet(key);if(g[id])Object.assign(g[id],patch);localSet(key,g);if(type==='todo')allGlobalTodo=g;else allGlobalTobuy=g;renderGlobalList(type);}
+}
+
+// ── LOGIN ──────────────────────────
+function doLogin() {
+  var name=document.getElementById('li-name').value.trim();
+  var pass=document.getElementById('li-pass').value.trim();
+  if(!name){toast('Enter your name');return;}
+  if(pass.toLowerCase()!==PASS.toLowerCase()){toast('Wrong password — try: together');return;}
+  curUser=name;
+  localStorage.setItem('oc_user',name);
+  document.getElementById('lyou').textContent=name;
+  document.getElementById('splash').style.display='none';
+  document.getElementById('app').style.display='flex';
+  reqNotifSilent();
+  renderCal();
+}
+function doLogout() {
+  localStorage.removeItem('oc_user');
+  document.getElementById('app').style.display='none';
+  document.getElementById('splash').style.display='flex';
+  document.getElementById('li-name').value='';
+  document.getElementById('li-pass').value='';
+}
+
+// ── BOOT ──────────────────────────
+window.addEventListener('DOMContentLoaded', function() {
+  initFirebase();
+  document.getElementById('e-date').value=todayStr();
+  document.getElementById('dtodo-inp').addEventListener('keydown',function(e){if(e.key==='Enter')addDayTodo();});
+  document.getElementById('todo-inp').addEventListener('keydown',function(e){if(e.key==='Enter')addGlobalItem('todo');});
+  document.getElementById('tobuy-inp').addEventListener('keydown',function(e){if(e.key==='Enter')addGlobalItem('tobuy');});
+  document.getElementById('emod').addEventListener('click',function(e){if(e.target===this)closeEmod();});
+  document.getElementById('dmod').addEventListener('click',function(e){if(e.target===this)closeDmod();});
+  var saved=localStorage.getItem('oc_user');
+  if(saved){curUser=saved;document.getElementById('lyou').textContent=saved;document.getElementById('splash').style.display='none';document.getElementById('app').style.display='flex';reqNotifSilent();renderCal();}
+});
+
+// ── SIDEBAR ────────────────────────
+function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sb-overlay').classList.add('open');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sb-overlay').classList.remove('open');}
+
+// ── VIEW SWITCH ────────────────────
+var VIEW_TITLES={calendar:'Shared Calendar',upcoming:'Upcoming',todo:'To-do List',tobuy:'To-buy List'};
+var ADD_LABELS={calendar:'Add Event',upcoming:'Add Event',todo:'Add To-do',tobuy:'Add Item'};
+
+function swView(v, btn) {
+  curView=v;
+  document.querySelectorAll('.snav-item').forEach(function(b){b.classList.remove('active');});
+  if(btn) btn.classList.add('active');
+  ['calendar','upcoming','todo','tobuy'].forEach(function(name){
+    document.getElementById('view-'+name).style.display=(name===v?'block':'none');
+  });
+  document.getElementById('view-title').textContent=VIEW_TITLES[v]||v;
+  document.getElementById('mob-title').textContent=VIEW_TITLES[v]||v;
+  document.getElementById('add-label').textContent=ADD_LABELS[v]||'Add';
+  document.getElementById('month-nav').style.display=(v==='calendar'?'flex':'none');
+  closeSidebar();
+  if(v==='upcoming') renderUpcoming();
+  if(v==='todo') renderGlobalList('todo');
+  if(v==='tobuy') renderGlobalList('tobuy');
+}
+
+function handleAdd() {
+  if(curView==='todo') { addGlobalItemFocus('todo'); return; }
+  if(curView==='tobuy') { addGlobalItemFocus('tobuy'); return; }
+  openAdd();
+}
+function addGlobalItemFocus(type) {
+  var inp=document.getElementById(type+'-inp');
+  if(inp){inp.focus();inp.scrollIntoView({behavior:'smooth',block:'center'});}
+}
+
+// ── CALENDAR ──────────────────────
+function renderCal() {
+  document.getElementById('mlbl').textContent=MONTHS[curMon]+' '+curYear;
+  var first=new Date(curYear,curMon,1).getDay(), dim=new Date(curYear,curMon+1,0).getDate();
+  var dimp=new Date(curYear,curMon,0).getDate(), td=new Date();
+  var ev=getEvents(), todos=getTodos(), total=Math.ceil((first+dim)/7)*7, html='';
+  for(var i=0;i<total;i++){
+    var d,m,y,other=false;
+    if(i<first){d=dimp-first+1+i;m=curMon-1;y=curYear;other=true;if(m<0){m=11;y--;}}
+    else if(i>=first+dim){d=i-first-dim+1;m=curMon+1;y=curYear;other=true;if(m>11){m=0;y++;}}
+    else{d=i-first+1;m=curMon;y=curYear;}
+    var ds=y+'-'+pad(m+1)+'-'+pad(d);
+    var isT=!other&&d===td.getDate()&&m===td.getMonth()&&y===td.getFullYear();
+    var de=Object.values(ev).filter(function(e){return e.date===ds;});
+    var dt=todos[ds]?Object.values(todos[ds]):[];
+    var pills=de.slice(0,2).map(function(e){return '<div class="pill '+e.owner+'">'+e.title+'</div>';}).join('');
+    var more=de.length>2?'<div class="more">+'+(de.length-2)+'</div>':'';
+    var tdots=dt.length?'<div class="todo-dots">'+dt.slice(0,5).map(function(t){return '<div class="tdot'+(t.done?' done':'')+'"></div>';}).join('')+'</div>':'';
+    html+='<div class="cell'+(other?' other':'')+(isT?' today':'')+'" onclick="openDay(\''+ds+'\')"><div class="dnum">'+d+'</div><div class="epills">'+pills+more+tdots+'</div></div>';
+  }
+  document.getElementById('grid').innerHTML=html;
+}
+function chMon(d){curMon+=d;if(curMon>11){curMon=0;curYear++;}if(curMon<0){curMon=11;curYear--;}renderCal();}
+
+// ── UPCOMING ──────────────────────
+function renderUpcoming() {
+  var ev=getEvents(), td=new Date(); td.setHours(0,0,0,0);
+  var up=Object.entries(ev).filter(function(e){return new Date(e[1].date+'T00:00:00')>=td;})
+    .sort(function(a,b){return a[1].date.localeCompare(b[1].date);});
+  if(!up.length){document.getElementById('ulist').innerHTML='<div style="text-align:center;padding:3rem 1rem;color:var(--muted);font-size:.85rem">No upcoming plans — tap + Add Event to get started!</div>';return;}
+  var grps={};
+  up.forEach(function(item){var k=item[1].date;if(!grps[k])grps[k]=[];grps[k].push(item);});
+  var html='';
+  Object.entries(grps).forEach(function(g){
+    var dt=new Date(g[0]+'T00:00:00');
+    html+='<div class="date-grp">'+dt.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})+'</div>';
+    g[1].forEach(function(item){
+      var e=item[1],id=item[0];
+      var col=e.owner==='you'?'var(--you)':e.owner==='her'?'var(--her)':'var(--both)';
+      var time=e.time?'&#9200; '+fmtTime(e.time)+' ':''; var notes=e.notes||'';
+      html+='<div class="ecard" onclick="openEdit(\''+id+'\')"><div class="ebar" style="background:'+col+'"></div><div class="econtent"><div class="etitle">'+e.title+'</div><div class="emeta"><span>'+time+'</span><span>'+notes+'</span></div></div><div class="obadge '+e.owner+'">'+(e.owner==='you'?'Mine':e.owner==='her'?'Partner':'Together')+'</div></div>';
+    });
+  });
+  document.getElementById('ulist').innerHTML=html;
+}
+
+// ── GLOBAL LISTS ──────────────────
+function addGlobalItem(type) {
+  var inp=document.getElementById(type+'-inp'), text=inp.value.trim();
+  if(!text) return;
+  var id=Date.now().toString();
+  var data={text:text,done:false,createdBy:curUser,ts:id};
+  saveGItem(type,id,data);
+  inp.value='';
+  var label=type==='todo'?'to-do':'item to buy';
+  pushNotif(curUser+' added a '+label+': "'+text+'"');
+  toast('Added!');
+}
+
+function renderGlobalList(type) {
+  var data=type==='todo'?getGtodo():getGtobuy();
+  var el=document.getElementById(type+'-list');
+  if(!el) return;
+  var items=Object.entries(data).sort(function(a,b){return parseInt(a[0])-parseInt(b[0]);});
+  var pending=items.filter(function(i){return !i[1].done;});
+  var done=items.filter(function(i){return i[1].done;});
+  var html='';
+
+  function renderItem(item){
+    var id=item[0],it=item[1];
+    return '<div class="list-item'+(it.done?' done-item':'')+'"><div class="chk'+(it.done?' checked':'')+'" onclick="toggleGItem(\''+type+'\',\''+id+'\','+(it.done?'false':'true')+')">'+(it.done?'&#10003;':'')+'</div><div class="item-text'+(it.done?' crossed':'')+'">'+escHtml(it.text)+'<div class="item-meta">by '+it.createdBy+'</div></div><button class="item-del" onclick="delGItem(\''+type+'\',\''+id+'\')">&#10005;</button></div>';
+  }
+
+  if(pending.length) html+=pending.map(renderItem).join('');
+  else html+='<div class="empty-list">Nothing here yet &#127881;</div>';
+  if(done.length) html+='<div style="font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1rem 0 .4rem">Done ('+done.length+')</div>'+done.map(renderItem).join('');
+  el.innerHTML=html;
+}
+
+function toggleGItem(type,id,done) {
+  updateGItem(type,id,{done:done});
+  if(done) pushNotif(curUser+' checked off "'+((type==='todo'?getGtodo():getGtobuy())[id]||{}).text+'"');
+}
+
+function delGlobalItem(type,id) { delGItem(type,id); }
+
+// ── DAY DETAIL ─────────────────────
+function openDay(ds) {
+  activeDay=ds;
+  var dt=new Date(ds+'T00:00:00');
+  document.getElementById('dd-date').textContent=dt.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  renderDayEvents(ds); renderDayTodos(ds);
+  document.getElementById('dmod').classList.add('open');
+}
+function closeDmod(){document.getElementById('dmod').classList.remove('open');activeDay=null;}
+
+function renderDayEvents(ds) {
+  var ev=getEvents(), de=Object.entries(ev).filter(function(e){return e[1].date===ds;});
+  if(!de.length){document.getElementById('dd-events').innerHTML='<div style="font-size:.78rem;color:var(--muted);padding:.3rem 0 .5rem">No events — tap "Add event" above.</div>';return;}
+  document.getElementById('dd-events').innerHTML=de.map(function(item){
+    var e=item[1],id=item[0], col=e.owner==='you'?'var(--you)':e.owner==='her'?'var(--her)':'var(--both)';
+    var meta=[e.time?fmtTime(e.time):null,e.notes].filter(Boolean).join(' · ');
+    return '<div class="dev-item" onclick="openEdit(\''+id+'\');closeDmod()"><div class="dev-bar" style="background:'+col+'"></div><div class="dev-content"><div class="dev-title">'+e.title+'</div>'+(meta?'<div class="dev-meta">'+meta+'</div>':'')+'</div></div>';
+  }).join('');
+}
+
+function renderDayTodos(ds) {
+  var todos=getTodos(), dt=todos[ds]?Object.entries(todos[ds]):[];
+  if(!dt.length){document.getElementById('dd-todos').innerHTML='<div style="font-size:.78rem;color:var(--muted);padding:.3rem 0 .4rem">No to-dos for this day.</div>';return;}
+  document.getElementById('dd-todos').innerHTML=dt.map(function(item){
+    var id=item[0],t=item[1];
+    return '<div class="dtodo-item"><div class="dtodo-chk'+(t.done?' done':'')+'" onclick="toggleDayTodo(\''+ds+'\',\''+id+'\','+(t.done?'false':'true')+')">'+(t.done?'&#10003;':'')+'</div><div class="dtodo-text'+(t.done?' done':'')+'">'+escHtml(t.text)+'</div><button class="dtodo-del" onclick="delDayTodoItem(\''+ds+'\',\''+id+'\')">&#10005;</button></div>';
+  }).join('');
+}
+
+function addDayTodo() {
+  var inp=document.getElementById('dtodo-inp'), text=inp.value.trim();
+  if(!text||!activeDay) return;
+  var id=Date.now().toString();
+  saveDayTodo(activeDay,id,{text:text,done:false,createdBy:curUser,ts:id});
+  inp.value='';
+  pushNotif(curUser+' added a to-do on '+activeDay+': "'+text+'"');
+  toast('To-do added!');
+}
+function toggleDayTodo(ds,id,done){updateDayTodo(ds,id,{done:done});}
+function delDayTodoItem(ds,id){delDayTodo(ds,id);}
+function openAddFromDay(){var ds=activeDay;closeDmod();openAdd();setTimeout(function(){document.getElementById('e-date').value=ds;},60);}
+
+// ── EVENT MODAL ────────────────────
+function openAdd() {
+  editId=null;
+  document.getElementById('emod-title').textContent='Add a plan';
+  document.getElementById('e-title').value='';
+  document.getElementById('e-date').value=todayStr();
+  document.getElementById('e-time').value='';
+  document.getElementById('e-notes').value='';
+  document.getElementById('edel-btn').style.display='none';
+  selOwner('you');
+  document.querySelectorAll('.rchip').forEach(function(c){c.classList.toggle('sel',c.dataset.r==='none');});
+  _selRem='none';
+  document.getElementById('emod').classList.add('open');
+}
+function openEdit(id) {
+  var e=getEvents()[id]; if(!e) return;
+  editId=id;
+  document.getElementById('emod-title').textContent='Edit plan';
+  document.getElementById('e-title').value=e.title;
+  document.getElementById('e-date').value=e.date;
+  document.getElementById('e-time').value=e.time||'';
+  document.getElementById('e-notes').value=e.notes||'';
+  document.getElementById('edel-btn').style.display='block';
+  selOwner(e.owner||'you');
+  document.querySelectorAll('.rchip').forEach(function(c){c.classList.toggle('sel',c.dataset.r===(e.reminder||'none'));});
+  _selRem=e.reminder||'none';
+  document.getElementById('emod').classList.add('open');
+}
+function closeEmod(){document.getElementById('emod').classList.remove('open');}
+
+function selOwner(o){
+  _selOwner=o;
+  document.getElementById('ob-you').className='obtn'+(o==='you'?' sel-you':'');
+  document.getElementById('ob-her').className='obtn'+(o==='her'?' sel-her':'');
+  document.getElementById('ob-both').className='obtn'+(o==='both'?' sel-both':'');
+}
+function selRem(el,r){
+  _selRem=r;
+  document.querySelectorAll('.rchip').forEach(function(c){c.classList.remove('sel');});
+  el.classList.add('sel');
+}
+function saveEvent() {
+  var title=document.getElementById('e-title').value.trim(), date=document.getElementById('e-date').value;
+  if(!title){toast('Add a title');return;} if(!date){toast('Pick a date');return;}
+  var id=editId||Date.now().toString();
+  var data={id:id,title:title,date:date,time:document.getElementById('e-time').value,notes:document.getElementById('e-notes').value.trim(),owner:_selOwner,reminder:_selRem,createdBy:curUser};
+  saveEvt(id,data); schedReminder(data); closeEmod();
+  if(!editId) pushNotif(curUser+' added an event: "'+title+'" on '+date);
+  toast(editId?'Plan updated!':'Plan added! &#9825;');
+  renderCal(); if(curView==='upcoming') renderUpcoming();
+}
+function delEvent(){if(!editId)return;delEvt(editId);closeEmod();toast('Plan deleted');renderCal();}
+
+// ── REMINDERS ─────────────────────
+function reqNotif() {
+  if(!('Notification'in window)){toast('Notifications not supported here');return;}
+  Notification.requestPermission().then(function(p){
+    notifGranted=p==='granted';
+    toast(p==='granted'?'&#128276; Reminders enabled!':'Permission denied');
+  });
+}
+function reqNotifSilent() {
+  if('Notification'in window && Notification.permission==='granted') notifGranted=true;
+  else if('Notification'in window && Notification.permission==='default') {
+    Notification.requestPermission().then(function(p){notifGranted=p==='granted';});
+  }
+}
+function schedReminder(e) {
+  if(!e.reminder||e.reminder==='none'||!notifGranted) return;
+  var evtDate=new Date(e.date+(e.time?'T'+e.time:'T09:00'));
+  var off={'1h':3600000,'1d':86400000,'3d':259200000}[e.reminder]||0;
+  var delay=evtDate.getTime()-off-Date.now();
+  if(delay>0&&delay<7*86400000) setTimeout(function(){new Notification('our calendar',{body:e.title+(e.time?' at '+fmtTime(e.time):'')});},delay);
+}
+
+// ── UTILS ─────────────────────────
+function todayStr(){return new Date().toISOString().split('T')[0];}
+function pad(n){return String(n).padStart(2,'0');}
+function fmtTime(t){if(!t)return'';var p=t.split(':'),h=parseInt(p[0]);return(h%12||12)+':'+p[1]+' '+(h>=12?'PM':'AM');}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function toast(msg){var el=document.getElementById('toast');el.innerHTML=msg;el.classList.add('show');setTimeout(function(){el.classList.remove('show');},2600);}
+function showBanner(msg) {
+  var el=document.getElementById('notif-banner');
+  el.textContent=msg; el.style.display='block';
+  setTimeout(function(){el.style.display='none';},4000);
+}
+</script>
+</body>
+</html>
